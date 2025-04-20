@@ -329,7 +329,58 @@ useEffect(() => {
 
 onConnectedが実行されるときに、最新の状態を受け取っているから。これは、エフェクトイベントに引数で渡すようにすればOKかな。
 
+## [エフェクトから依存値を取り除く – React](https://ja.react.dev/learn/removing-effect-dependencies)
 
+エフェクトについて公式ドキュメントを読むのは、これで最後にする。
+
+useEffectで最新の値を読み取りたいが、その値に反応してエフェクトを実行する必要がない場合は、その処理をエフェクトイベントにラップすれば対処できる。
+
+propsでイベントハンドラを受け取った場合も、似たようなことが起こる。useEffectの中で使いたいが、その値に反応したいわけではない。その場合は、イベントハンドラをエフェクトイベントでラップすればよい。
+
+### チャレンジ問題
+
+1.インターバルがリセットされる問題を修正
+
+countを依存配列に追加しているため、countが更新される度にエフェクトが実行されている。なので、countを読み取らずに同じ処理ができるように、`setState`を関数形式に書き換える。`setCount((couunt) => count + 1)`。
+
+2.アニメーションの再トリガを修正
+
+durationを変更したときに、アニメーションが再トリガされないように修正する。これは、durationを依存配列に追加しないように変更すればよい、ということ。
+
+durationをエフェクトイベント内で読み取るようにすればよい。remove→showしないとdurationの変更は反映されないけれど、これでいいのかな？→よいっぽい。
+
+3.チャットの再接続を修正
+
+Toggle themeを押すたびにチャットの再接続が走るのは、propsで受け取っているオブジェクトが、親コンポーネントの再レンダリングごとに作成されているため。
+
+これでいいんだけれど、冗長なのでなんとかならないかな？
+
+```js
+export default function ChatRoom({ options }) {
+  const { serverUrl, roomId } = options;
+  useEffect(() => {
+    const connection = createConnection({ serverUrl, roomId });
+    connection.connect();
+    return () => connection.disconnect();
+  }, [serverUrl, roomId]);
+
+  return <h1>Welcome to the {options.roomId} room!</h1>;
+}
+```
+
+そもそも、propsをoptionsではなくroomIdとserverUrlに分けて渡したほうが、この場合はシンプルになる。あるいは、propsはそのままでコンポーネント側で分割代入で受け取るようにしても（`ChatRoom({ options: { serverUrl, roomId } })`）シンプルになる。
+
+4.別のチャット再接続問題を修正
+
+テーマを変更したときに、再接続してしまう問題を修正する。これはエフェクトの依存配列からテーマを除外することを考えればいいのかな。
+
+エフェクトが実行されているのは、propsの`onMessage`や`cretaeConnection`が関数で、レンダリングごとに新しいオブジェクトに変わっているから。
+
+まず、`onMessage`の変更ごとにエフェクトを再実行する必要はないので、これはエフェクトイベントでラップする。
+
+`createConnection`についてはこれでいいのかな...？コネクションを作る関数が変われば再接続する、という意味になるので、おかしくはないとは思う。
+
+`serverUrl`と`roomId`が変わったときだけ、`cretaConnection`が作り直されるようにする必要がある。これは`useCallback`使えばいいのかな。→回答例とは違いますが、できました。
 
 ## [2023 年、改めて React と Elm Architecture を比較する - ジンジャー研究室](https://jinjor-labo.hatenablog.com/entry/2023/03/30/061358)
 
