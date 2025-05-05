@@ -1,6 +1,41 @@
 import { useEffect, useState } from "react";
 import { convertRoman, searchEntriesByPrefix, searchEntry } from "./romantable";
 
+function convertBuffer(buffer: string): { buffer: string; output: string } {
+  const entry = searchEntry(buffer);
+  const prefixEntries = searchEntriesByPrefix(buffer);
+
+  if (entry) {
+    if (prefixEntries.length <= 1) {
+      // 変換ルールが1つしかない場合、そのルールを使って変換する
+      return {
+        output: entry.output,
+        buffer: entry.nextInput ? entry.nextInput : "",
+      };
+    } else {
+      // バッファの文字で始まる変換ルールが複数ある場合は、変換を保留する（例: buffer=nのとき、nかnnかnaか分からない）
+      return { buffer, output: "" };
+    }
+  } else {
+    if (prefixEntries.length === 0) {
+      // bufferはこれから変換される可能性はないので、区切って変換を完了させる
+      // |buffer|-1文字と、1文字の2つに分けて変換すればいいっぽい
+      const left = buffer.slice(0, buffer.length - 1);
+      const right = buffer.slice(buffer.length - 1);
+
+      // 左半分を変換する。本当は右半分も変換して、変換できなかった場合はバッファに入れる必要がある。
+      // ここで変換していないのは、ローマ字には1文字で変換されるものがaiueoしかなく、
+      // アルファベットの入力のみであれば他の文字+aiueoは全てルールに従って変換されるため。
+      // 例えば記号も入力する場合は、";a"などを";あ"に変換する必要があるので、ここで変換が必要。
+      // 他にも、例えば"na"→"な"というルールがなければ、"na"をここで"んあ"に変換する必要がある。
+      return { output: convertRoman(left), buffer: right };
+    } else {
+      // 同じく変換を保留する
+      return { buffer, output: "" };
+    }
+  }
+}
+
 function App() {
   const [input, setInput] = useState<string>("");
   const [text, setText] = useState<string>("");
@@ -13,41 +48,9 @@ function App() {
       if (("a" <= e.key && e.key <= "z") || e.key === "-") {
         setText((text) => text + e.key);
 
-        const newBuffer = buffer + e.key;
+        const { output, buffer: newBuffer } = convertBuffer(buffer + e.key);
+        setConvertedText((prev) => prev + output);
         setBuffer(newBuffer);
-
-        // ここに変換のロジックを書く
-
-        const entry = searchEntry(newBuffer);
-        const prefixEntries = searchEntriesByPrefix(newBuffer);
-        // 変換ルールが見つかったら即時変換してみる
-        if (entry) {
-          if (prefixEntries.length <= 1) {
-            // 変換ルールがentryしかない場合、entryを使って変換する
-            setBuffer(entry.nextInput ? entry.nextInput : "");
-            setConvertedText((prev) => prev + entry.output);
-          } else {
-            // bufferから始まる変換ルールが複数ある場合は、変換を保留する
-          }
-        } else {
-          // TODO:
-          if (prefixEntries.length === 0) {
-            // bufferはこれから変換される可能性はないので、区切って変換を完了させる
-            // |buffer|-1文字と、1文字の2つに分けて変換すればいいっぽい
-            const left = newBuffer.slice(0, newBuffer.length - 1);
-            const right = newBuffer.slice(newBuffer.length - 1);
-            console.log({ left, right });
-
-            // 左半分を変換する
-            setConvertedText((prev) => prev + convertRoman(left));
-
-            // 本当は右半分も変換する必要があるが、ローマ字には1文字で変換されるものがaiueoしかなく、
-            // アルファベットの入力のみであれば他の文字+aiueoは全てルールに従って変換されるので、ここでは考慮しなくてよい。
-            // 例えば記号も入力する場合は、";a"などを";あ"に変換する必要があるので、ここで変換が必要。
-            // 他にも、例えば"na"→"な"というルールがなければ、"na"をここで"んあ"に変換する必要がある。
-            setBuffer(right);
-          }
-        }
       }
       if (e.key === "Backspace" || e.key === "Enter") {
         setInput("");
