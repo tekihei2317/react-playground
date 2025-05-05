@@ -1,6 +1,30 @@
 export type TableEntry = { input: string; output: string; nextInput?: string };
 export type RomanTable = TableEntry[];
 
+/**
+ * 文字列に該当するルールを検索する
+ */
+export function searchEntry(text: string): TableEntry | undefined {
+  console.log({ text });
+  return romanTable.find((entry) => entry.input === text);
+}
+
+/**
+ * ローマ字を変換する
+ */
+export function convertRoman(text: string): string {
+  const rule = searchEntry(text);
+  if (rule === undefined) return text;
+  return rule.output;
+}
+
+/**
+ * inputがprefixで始まるものを検索する
+ */
+export function searchEntriesByPrefix(prefix: string): TableEntry[] {
+  return romanTable.filter((entry) => entry.input.startsWith(prefix));
+}
+
 export const romanTable: RomanTable = [
   { input: "-", output: "ー" },
   { input: "~", output: "〜" },
