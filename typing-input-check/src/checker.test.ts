@@ -250,3 +250,52 @@ describe("checker.expected", () => {
     expect(checker.expected).toBe("");
   });
 });
+
+describe("「いっぬ」の入力", () => {
+  test("iltunuで入力できること", () => {
+    const checker = initializeChecker({ word: "いっぬ" });
+    expect(checker.setCharacter("i").correct).toBe(true);
+    expect(checker.setCharacter("l").correct).toBe(true);
+    expect(checker.setCharacter("t").correct).toBe(true);
+    expect(checker.setCharacter("u").correct).toBe(true);
+    expect(checker.setCharacter("n").correct).toBe(true);
+    expect(checker.setCharacter("u").correct).toBe(true);
+  });
+
+  test("ixtunuで入力できること", () => {
+    const checker = initializeChecker({ word: "いっぬ" });
+    expect(checker.setCharacter("i").correct).toBe(true);
+    expect(checker.setCharacter("x").correct).toBe(true);
+    expect(checker.setCharacter("t").correct).toBe(true);
+    expect(checker.setCharacter("u").correct).toBe(true);
+    expect(checker.setCharacter("n").correct).toBe(true);
+    expect(checker.setCharacter("u").correct).toBe(true);
+  });
+
+  test("innuで入力できないこと", () => {
+    const checker = initializeChecker({ word: "いっぬ" });
+    expect(checker.setCharacter("i").correct).toBe(true);
+    expect(checker.setCharacter("n").correct).toBe(false);
+  });
+});
+
+describe("「んん」の入力", () => {
+  test("nnnnで入力できること", () => {
+    const checker = initializeChecker({ word: "んん" });
+    expect(checker.setCharacter("n").correct).toBe(true);
+    expect(checker.currentKana).toBe("");
+    expect(checker.currentRoman).toBe("n");
+
+    expect(checker.setCharacter("n").correct).toBe(true);
+    expect(checker.currentKana).toBe("ん");
+    expect(checker.currentRoman).toBe("nn");
+
+    expect(checker.setCharacter("n").correct).toBe(true);
+    expect(checker.currentKana).toBe("ん");
+    expect(checker.currentRoman).toBe("nnn");
+
+    expect(checker.setCharacter("n").correct).toBe(true);
+    expect(checker.currentKana).toBe("んん");
+    expect(checker.currentRoman).toBe("nnnn");
+  });
+});
