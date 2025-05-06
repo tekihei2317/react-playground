@@ -7,7 +7,7 @@ describe("createExpectedInput", () => {
     expect(expected).toBe("konnnitiha");
   });
 
-  test.skip("『たった』の入力候補を生成する", () => {
+  test("『たった』の入力候補を生成する", () => {
     const expected = createExpectedInput("たった");
     expect(expected).toBe("tatta");
   });
@@ -178,36 +178,75 @@ describe("「っ」の入力", () => {
   });
 });
 
-test.skip("checker wrong input", () => {
-  const checker = initializeChecker({ word: "こんにちは" });
-  expect(checker.expected).toBe("konnnitiha");
+describe("checker.expected", () => {
+  test("「あ」の入力で、aを入力したら減ること", () => {
+    const checker = initializeChecker({ word: "あ" });
+    expect(checker.expected).toBe("a");
 
-  const result = checker.setCharacter("a");
-  expect(result).toEqual({
-    correct: false,
-    expected: "konnnitiha",
-    current: "",
-    currentKana: "",
-  });
-});
-
-test.skip("checker correct input", () => {
-  const checker = initializeChecker({ word: "こんにちは" });
-  expect(checker.expected).toBe("konnnitiha");
-
-  const result = checker.setCharacter("k");
-  expect(result).toEqual({
-    correct: true,
-    expected: "onnnitiha",
-    current: "k",
-    currentKana: "k",
+    checker.setCharacter("a");
+    expect(checker.expected).toBe("");
   });
 
-  const result2 = checker.setCharacter("o");
-  expect(result2).toEqual({
-    correct: true,
-    expected: "nnitiha",
-    current: "ko",
-    currentKana: "こ",
+  test("「さかな」の入力で、sakanaを入力したら減ること", () => {
+    const checker = initializeChecker({ word: "さかな" });
+
+    expect(checker.expected).toBe("sakana");
+
+    checker.setCharacter("s");
+    expect(checker.expected).toBe("akana");
+    checker.setCharacter("a");
+    expect(checker.expected).toBe("kana");
+    checker.setCharacter("k");
+    expect(checker.expected).toBe("ana");
+    checker.setCharacter("a");
+    expect(checker.expected).toBe("na");
+    checker.setCharacter("n");
+    expect(checker.expected).toBe("a");
+    checker.setCharacter("a");
+    expect(checker.expected).toBe("");
+  });
+
+  test("「し」をshと入力したら、expectedが更新されること", () => {
+    const checker = initializeChecker({ word: "し" });
+    expect(checker.expected).toBe("si");
+
+    checker.setCharacter("s");
+    expect(checker.expected).toBe("i");
+    checker.setCharacter("h");
+    expect(checker.expected).toBe("i");
+    checker.setCharacter("i");
+    expect(checker.expected).toBe("");
+  });
+
+  test("「しゃ」をsiと入力したら、expectedが更新されること", () => {
+    const checker = initializeChecker({ word: "しゃ" });
+    expect(checker.expected).toBe("sya");
+
+    checker.setCharacter("s");
+    expect(checker.expected).toBe("ya");
+    checker.setCharacter("i");
+    expect(checker.expected).toBe("xya");
+    checker.setCharacter("x");
+    expect(checker.expected).toBe("ya");
+    checker.setCharacter("y");
+    expect(checker.expected).toBe("a");
+    checker.setCharacter("a");
+    expect(checker.expected).toBe("");
+  });
+
+  test("「てんき」の入力で、tenkiと入力してexpectedが正しく更新されること", () => {
+    const checker = initializeChecker({ word: "てんき" });
+    expect(checker.expected).toBe("tennki");
+
+    checker.setCharacter("t");
+    expect(checker.expected).toBe("ennki");
+    checker.setCharacter("e");
+    expect(checker.expected).toBe("nnki");
+    checker.setCharacter("n");
+    expect(checker.expected).toBe("nki");
+    checker.setCharacter("k");
+    expect(checker.expected).toBe("i");
+    checker.setCharacter("i");
+    expect(checker.expected).toBe("");
   });
 });

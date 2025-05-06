@@ -24,19 +24,36 @@ export type Checker = {
 /**
  * ワードに対して、予想されるローマ字の文字列を作成する
  */
-export function createExpectedInput(word: string): string {
+export function createExpectedInput(
+  word: string,
+  initialBuffer: string | undefined = undefined
+): string {
   // 文字列を前から順番に見ていって、最長一致するものを選択していく
 
   let index = 0;
-  const entries: TableEntry[] = [];
+  let buffer = initialBuffer;
+  let expected = "";
 
   while (index < word.length) {
     let candidate: TableEntry | undefined;
 
     romanTable.forEach((entry) => {
-      if (entry.output === word.slice(index, index + entry.output.length)) {
-        // TODO: entry.nextInputがある場合は、それを次の文字に合致させられなければならない
+      // バッファと一致しているかどうか
+      const matchBuffer = buffer ? entry.input.startsWith(buffer) : true;
 
+      const isOutputCorrect =
+        entry.output === word.slice(index, index + entry.output.length);
+      let isNextInputCorrect = true;
+      if (entry.nextInput) {
+        const nextKanaIndex = index + entry.output.length;
+        isNextInputCorrect = searchEntriesByPrefix(entry.nextInput).some(
+          (e) =>
+            e.output ===
+            word.slice(nextKanaIndex, nextKanaIndex + e.output.length)
+        );
+      }
+
+      if (matchBuffer && isOutputCorrect && isNextInputCorrect) {
         // 最長一致の中で、最初に一致したものを選択する
         if (
           candidate === undefined ||
@@ -51,11 +68,13 @@ export function createExpectedInput(word: string): string {
     if (!candidate) {
       throw new Error(`${word.slice(index)} を変換できません`);
     }
-    entries.push(candidate);
+
     index += candidate.output.length;
+    expected += candidate.input.slice(buffer ? buffer.length : 0);
+    buffer = candidate.nextInput ? candidate.nextInput : undefined;
   }
 
-  return entries.map((entry) => entry.input).join("");
+  return expected;
 }
 
 export function initializeChecker({ word }: { word: string }): Checker {
@@ -88,7 +107,6 @@ export function initializeChecker({ word }: { word: string }): Checker {
 
       if (prefixEntries.length >= 2) {
         // 変換できない場合
-
         const entry = prefixEntries.find((entry) => {
           const isOutputCorrect =
             entry.output ===
@@ -109,7 +127,13 @@ export function initializeChecker({ word }: { word: string }): Checker {
           // characterは正解
           buffer = tempBuffer;
           currentRoman += character;
-          // TODO: expectedを更新する
+
+          // expectedを更新する
+          if (character === expected[0]) {
+            expected = expected.slice(1);
+          } else {
+            expected = createExpectedInput(word.slice(wordIndex), buffer);
+          }
 
           return { correct: true };
         } else {
@@ -127,6 +151,15 @@ export function initializeChecker({ word }: { word: string }): Checker {
             currentRoman += character;
             currentKana += entry.output;
             wordIndex += entry.output.length;
+
+            if (expected[0] === character) {
+              // 候補と同じ文字を入力した場合は、候補をそのまま使う
+              expected = expected.slice(1);
+            } else {
+              // ローマ字入力の場合は、ここでnextInputを考慮しなくてOK？
+              // ローマ字の候補と違う場合は、ワードの残りに対する候補を再作成する
+              expected = createExpectedInput(word.slice(wordIndex));
+            }
 
             return { correct: true };
           } else {
@@ -162,8 +195,9 @@ export function initializeChecker({ word }: { word: string }): Checker {
             currentRoman += character;
             currentKana += leftConverted;
             wordIndex += leftConverted.length;
-            // TODO: expectedを更新する
 
+            // expectedを更新する
+            expected = createExpectedInput(word.slice(wordIndex), right);
             return { correct: true };
           } else {
             return { correct: false };
