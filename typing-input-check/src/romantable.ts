@@ -4,23 +4,23 @@ export type RomanTable = TableEntry[];
 /**
  * 文字列に該当するルールを検索する
  */
-function searchEntry(text: string): TableEntry | undefined {
+export function searchEntry(text: string): TableEntry | undefined {
   return romanTable.find((entry) => entry.input === text);
 }
 
 /**
  * ローマ字を変換する
  */
-function convertRoman(text: string): string {
+export function convertRoman(text: string): string {
   const rule = searchEntry(text);
   if (rule === undefined) return text;
   return rule.output;
 }
 
 /**
- * inputがprefixで始まるものを検索する
+ * entry.inputがprefixで始まるものを検索する
  */
-function searchEntriesByPrefix(prefix: string): TableEntry[] {
+export function searchEntriesByPrefix(prefix: string): TableEntry[] {
   return romanTable.filter((entry) => entry.input.startsWith(prefix));
 }
 
@@ -211,11 +211,6 @@ export const romanTable: RomanTable = [
   { input: "de", output: "で" },
   { input: "do", output: "ど" },
 
-  { input: "xtu", output: "っ" },
-  { input: "xtsu", output: "っ" },
-  { input: "ltu", output: "っ" },
-  { input: "ltsu", output: "っ" },
-
   { input: "na", output: "な" },
   { input: "ni", output: "に" },
   { input: "nu", output: "ぬ" },
@@ -311,6 +306,11 @@ export const romanTable: RomanTable = [
   { input: "ww", output: "っ", nextInput: "w" },
   { input: "www", output: "w", nextInput: "ww" },
   { input: "cc", output: "っ", nextInput: "c" },
+
+  { input: "xtu", output: "っ" },
+  { input: "xtsu", output: "っ" },
+  { input: "ltu", output: "っ" },
+  { input: "ltsu", output: "っ" },
 
   { input: "kya", output: "きゃ" },
   { input: "kyi", output: "きぃ" },

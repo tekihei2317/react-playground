@@ -1,86 +1,115 @@
-import { expect, test } from "vitest";
-import { romanTable, TableEntry } from "./romantable";
+import { describe, expect, test } from "vitest";
+import { CheckResult, createExpectedInput, initializeChecker } from "./checker";
 
-type CheckResult = {
-  correct: boolean;
-  expected: string;
-  current: string;
-  currentKana: string;
-};
+describe("createExpectedInput", () => {
+  test("『こんにちは』の入力候補を生成する", () => {
+    const expected = createExpectedInput("こんにちは");
+    expect(expected).toBe("konnnitiha");
+  });
 
-type Checker = {
-  expected: string;
-  setCharacter: (character: string) => CheckResult;
-};
+  test.skip("『たった』の入力候補を生成する", () => {
+    const expected = createExpectedInput("たった");
+    expect(expected).toBe("tatta");
+  });
+});
 
-/**
- * ワードに対して、予想されるローマ字の文字列を作成する
- */
-function createExpectedInput(word: string): string {
-  // 文字列を前から順番に見ていって、最長一致するものを選択していく
+describe("checker 「か」の場合", () => {
+  test("kaを入力すると正解になること", () => {
+    const checker = initializeChecker({ word: "か" });
+    const result = checker.setCharacter("k");
+    const expected: CheckResult = { correct: true };
 
-  let index = 0;
-  const entries: TableEntry[] = [];
+    expect(result).toEqual(expected);
+    expect(checker.currentRoman).toBe("k");
 
-  while (index < word.length) {
-    console.log({ index });
+    const result2 = checker.setCharacter("a");
+    const expected2: CheckResult = { correct: true };
 
-    let candidate: TableEntry | undefined;
+    expect(result2).toEqual(expected2);
+    expect(checker.currentRoman).toBe("ka");
+  });
 
-    romanTable.forEach((entry) => {
-      if (entry.output === word.slice(index, index + entry.output.length)) {
-        // 最長一致の中で、最初に一致したものを選択する
-        if (
-          candidate === undefined ||
-          entry.output.length > candidate.output.length
-        ) {
-          candidate = entry;
-        }
-      }
-    });
+  test("sを入力すると間違いになること", () => {
+    const checker = initializeChecker({ word: "か" });
+    const expected: CheckResult = { correct: false };
 
-    // 変換ルールが存在しなかった場合（記号などがある場合は実装が必要）
-    if (!candidate) {
-      throw new Error(`${word.slice(index)} を変換できません`);
-    }
-    entries.push(candidate);
-    index += candidate.output.length;
-    console.log({ candidate });
-  }
+    const result = checker.setCharacter("s");
+    expect(result).toEqual(expected);
+    expect(checker.currentRoman).toBe("");
+  });
 
-  console.log(entries);
+  test("tを入力すると間違いになること", () => {
+    const checker = initializeChecker({ word: "か" });
+    const expected: CheckResult = { correct: false };
 
-  return entries.map((entry) => entry.input).join("");
-}
+    const result = checker.setCharacter("t");
+    expect(result).toEqual(expected);
+    expect(checker.currentRoman).toBe("");
+  });
 
-function initializeChecker({ word }: { word: string }): Checker {
-  let converted = "";
-  let buffer = "";
-  let expected = "";
+  test("aを入力すると間違いになること", () => {
+    const checker = initializeChecker({ word: "か" });
+    const result = checker.setCharacter("a");
 
-  const checker: Checker = {
-    get expected(): string {
-      return expected;
-    },
-    setCharacter(character): CheckResult {
-      converted += character;
+    const expected: CheckResult = { correct: false };
+    expect(result).toEqual(expected);
+  });
+});
 
-      return {
-        correct: true,
-        expected: "",
-        current: converted,
-        currentKana: "",
-      };
-    },
-  };
+describe("checker 「あ」の場合", () => {
+  test("aを入力すると正解になること", () => {
+    const checker = initializeChecker({ word: "あ" });
+    const result = checker.setCharacter("a");
 
-  return checker;
-}
+    const expected: CheckResult = { correct: true };
+    expect(result).toEqual(expected);
+  });
 
-test("createExpectedInput", () => {
-  const expected = createExpectedInput("こんにちは");
+  test("kを入力すると正解になること", () => {
+    const checker = initializeChecker({ word: "あ" });
+    const result = checker.setCharacter("k");
 
-  expect(expected).toBe("konnnitiha");
+    const expected: CheckResult = { correct: false };
+    expect(result).toEqual(expected);
+  });
+});
+
+describe("checker 「てんき」の場合", () => {
+  test("tenkiを入力すると正解になること", () => {
+    const checker = initializeChecker({ word: "てんき" });
+
+    checker.setCharacter("t");
+    expect(checker.currentRoman).toBe("t");
+    checker.setCharacter("e");
+    expect(checker.currentRoman).toBe("te");
+    checker.setCharacter("n");
+    expect(checker.currentRoman).toBe("ten");
+    checker.setCharacter("k");
+    expect(checker.currentRoman).toBe("tenk");
+
+    const result = checker.setCharacter("i");
+    expect(checker.currentRoman).toBe("tenki");
+    expect(result.correct).toBe(true);
+  });
+
+  test("tennkiを入力すると正解になること", () => {
+    const checker = initializeChecker({ word: "てんき" });
+
+    checker.setCharacter("t");
+    expect(checker.currentRoman).toBe("t");
+    checker.setCharacter("e");
+    expect(checker.currentRoman).toBe("te");
+    checker.setCharacter("n");
+    expect(checker.currentRoman).toBe("ten");
+    checker.setCharacter("n");
+    expect(checker.currentRoman).toBe("tenn");
+    checker.setCharacter("k");
+    expect(checker.currentRoman).toBe("tennk");
+
+    const result = checker.setCharacter("i");
+    expect(checker.currentRoman).toBe("tennki");
+    expect(result.correct).toBe(true);
+  });
 });
 
 test.skip("checker wrong input", () => {
