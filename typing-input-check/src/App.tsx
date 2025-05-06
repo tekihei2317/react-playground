@@ -1,6 +1,8 @@
-import { useEffect, useReducer, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { words } from "./words";
 import { initializeChecker } from "./checker";
+import { TypingStats, useTypingStats } from "./use-typing-stats";
+import { useEffectEvent } from "./use-effect-event";
 
 type WordInputState = {
   currentKana: string;
@@ -8,34 +10,34 @@ type WordInputState = {
   expectedRoman: string;
 };
 interface PlayScreenProps {
-  onFinish: () => void;
   wordIndex: number;
   wordInputState: WordInputState;
+  stats: TypingStats;
 }
 
-function PlayScreen({ onFinish, wordIndex, wordInputState }: PlayScreenProps) {
+function PlayScreen({ wordIndex, wordInputState, stats }: PlayScreenProps) {
   const word = words[wordIndex];
   const nextWord = words[(wordIndex + 1) % words.length];
-  console.log({ wordInputState });
 
   return (
     <div>
       <div className="border p-4 mb-4">
         <div className="flex justify-between mb-4">
           <div>
-            残り時間 <span className="text-2xl">15</span> 秒
+            残り時間 <span className="text-2xl">{stats.timeLeft}</span> 秒
           </div>
           <div>
-            打鍵数 <span className="text-2xl">43</span>
+            打鍵数 <span className="text-2xl">{stats.keystrokes}</span>
           </div>
           <div>
-            文字数 <span className="text-2xl">23</span>
+            文字数 <span className="text-2xl">{stats.totalChars}</span>
           </div>
           <div>
-            ミスタッチ <span className="text-2xl text-red-500">1</span>
+            ミスタッチ{" "}
+            <span className="text-2xl text-red-500">{stats.misses}</span>
           </div>
           <div>
-            打鍵速度 <span className="text-2xl">2.9</span> 打鍵/秒
+            打鍵速度 <span className="text-2xl">{stats.speed}</span> 打鍵/秒
           </div>
         </div>
 
@@ -68,19 +70,16 @@ function PlayScreen({ onFinish, wordIndex, wordInputState }: PlayScreenProps) {
           </div>
         </div>
       </div>
-
-      <button onClick={onFinish} className="w-full">
-        タイピング終了（デモ用）
-      </button>
     </div>
   );
 }
 
 interface ResultScreenProps {
   onRestart: () => void;
+  stats: TypingStats;
 }
 
-function ResultScreen({ onRestart }: ResultScreenProps) {
+function ResultScreen({ onRestart, stats }: ResultScreenProps) {
   return (
     <div>
       <div className="bg-white border border-gray-200 p-4 mb-4">
@@ -92,24 +91,24 @@ function ResultScreen({ onRestart }: ResultScreenProps) {
               <tbody>
                 <tr>
                   <td>打鍵数</td>
-                  <td className="text-right text-2xl">318</td>
+                  <td className="text-right text-2xl">{stats.keystrokes}</td>
                 </tr>
                 <tr>
                   <td>文字数</td>
-                  <td className="text-right text-2xl">183</td>
+                  <td className="text-right text-2xl">{stats.totalChars}</td>
                 </tr>
                 <tr>
                   <td>ミス数</td>
-                  <td className="text-right text-2xl">6</td>
+                  <td className="text-right text-2xl">{stats.misses}</td>
                 </tr>
                 <tr>
                   <td>平均入力打鍵/秒</td>
-                  <td className="text-right text-2xl">10.6</td>
+                  <td className="text-right text-2xl">{stats.speed}</td>
                 </tr>
-                <tr>
+                {/* <tr>
                   <td>瞬間最高打鍵/秒</td>
                   <td className="text-right text-2xl">13</td>
-                </tr>
+                </tr> */}
               </tbody>
             </table>
           </div>
@@ -117,7 +116,7 @@ function ResultScreen({ onRestart }: ResultScreenProps) {
 
         <button
           onClick={onRestart}
-          className="w-full bg-gray-200 hover:bg-gray-300 text-black"
+          className="w-full bg-gray-200 hover:bg-gray-300 text-black p-2"
         >
           再挑戦する（スペースキーまたはEscキー）
         </button>
@@ -128,10 +127,7 @@ function ResultScreen({ onRestart }: ResultScreenProps) {
 
 export default function App() {
   const [screen, setScreen] = useState<"start" | "play" | "result">("start");
-  const [wordIndex, goToNextWord] = useReducer(
-    (index) => (index + 1) % words.length,
-    0
-  );
+  const [wordIndex, setWordIndex] = useState(0);
   const currentWord = words[wordIndex];
   const checker = useRef(initializeChecker({ word: currentWord.hiragana }));
 
@@ -141,24 +137,37 @@ export default function App() {
     checker.current.expected
   );
 
+  const restart = useEffectEvent(() => {
+    setScreen("start");
+    updateStats({ type: "reset" });
+
+    setWordIndex(0);
+    checker.current = initializeChecker({ word: words[0].hiragana });
+    setCurrentKana("");
+    setCurrentRoman("");
+    setExpectedRoman(checker.current.expected);
+  });
+
+  const { typingStats: stats, updateTypingStats: updateStats } =
+    useTypingStats();
+
+  // キーボード入力を受け取る
   useEffect(() => {
-    // キーボード入力を受け取る
     const handle = (e: KeyboardEvent) => {
       if (screen === "start") {
-        // キーボード入力を受け取り、正解であればプレイ可能な状態にする
+        // キーボード入力を受け取り、正解であればゲームを開始する
         if (("a" <= e.key && e.key <= "z") || e.key === "-") {
           const result = checker.current.setCharacter(e.key);
 
           if (result.correct) {
-            // ゲーム開始
             setScreen("play");
             setCurrentKana(checker.current.currentKana);
             setCurrentRoman(checker.current.currentRoman);
             setExpectedRoman(checker.current.expected);
+            updateStats({ type: "correct" });
           }
         }
       } else if (screen === "play") {
-        // キーボード入力を受け取る
         if (("a" <= e.key && e.key <= "z") || e.key === "-") {
           const result = checker.current.setCharacter(e.key);
 
@@ -166,10 +175,11 @@ export default function App() {
             setCurrentKana(checker.current.currentKana);
             setCurrentRoman(checker.current.currentRoman);
             setExpectedRoman(checker.current.expected);
+            updateStats({ type: "correct" });
 
             if (checker.current.expected === "") {
               // 最後まで打ったら次のワードへ
-              goToNextWord();
+              setWordIndex((prev) => (prev + 1) % words.length);
 
               checker.current = initializeChecker({
                 word: words[(wordIndex + 1) % words.length].hiragana,
@@ -178,30 +188,51 @@ export default function App() {
               setCurrentRoman("");
               setExpectedRoman(checker.current.expected);
             }
+          } else {
+            updateStats({ type: "miss" });
           }
         }
       } else {
-        if (e.key === "Space") {
-          setScreen("start");
+        if (e.key === " " || e.key === "Escape") {
+          restart();
         }
       }
     };
 
     window.addEventListener("keydown", handle);
     return () => window.removeEventListener("keydown", handle);
-  }, [screen, checker, wordIndex]);
+  }, [screen, checker, wordIndex, updateStats, restart]);
+
+  // プレイ開始後、1秒ごとに残り時間と打鍵速度を更新する
+  const tickHandler = useEffectEvent(() => {
+    if (stats.timeLeft > 0) {
+      updateStats({ type: "tick" });
+
+      if (stats.timeLeft === 1) {
+        setScreen("result");
+      }
+    }
+  });
+  useEffect(() => {
+    if (screen === "play") {
+      const intervalId = window.setInterval(tickHandler, 1000);
+
+      return () => window.clearInterval(intervalId);
+    }
+    // TODO:
+  }, [screen, tickHandler]);
 
   return (
     <div className="max-w-3xl mx-auto p-4">
       {(screen === "start" || screen === "play") && (
         <PlayScreen
-          onFinish={() => setScreen("result")}
           wordIndex={wordIndex}
           wordInputState={{ currentKana, currentRoman, expectedRoman }}
+          stats={stats}
         />
       )}
       {screen === "result" && (
-        <ResultScreen onRestart={() => setScreen("start")} />
+        <ResultScreen onRestart={() => restart()} stats={stats} />
       )}
     </div>
   );
