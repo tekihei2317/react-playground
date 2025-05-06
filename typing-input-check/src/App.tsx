@@ -1,70 +1,26 @@
-import { useState } from "react";
+import { useEffect, useReducer, useRef, useState } from "react";
+import { words } from "./words";
+import { initializeChecker } from "./checker";
 
-interface StartScreenProps {
-  onStart: () => void;
+type WordInputState = {
+  currentKana: string;
+  currentRoman: string;
+  expectedRoman: string;
+};
+interface PlayScreenProps {
+  onFinish: () => void;
+  wordIndex: number;
+  wordInputState: WordInputState;
 }
 
-function StartScreen({ onStart }: StartScreenProps) {
+function PlayScreen({ onFinish, wordIndex, wordInputState }: PlayScreenProps) {
+  const word = words[wordIndex];
+  const nextWord = words[(wordIndex + 1) % words.length];
+  console.log({ wordInputState });
+
   return (
     <div>
       <div className="border p-4 mb-4">
-        <div className="flex justify-between mb-4">
-          <div>
-            残り時間 <span className="text-2xl">30</span> 秒
-          </div>
-          <div>
-            打鍵数 <span className="text-2xl">0</span>
-          </div>
-          <div>
-            文字数 <span className="text-2xl">0</span>
-          </div>
-          <div>
-            ミスタッチ <span className="text-2xl text-red-500">0</span>
-          </div>
-          <div>
-            打鍵速度 <span className="text-2xl">0</span> 打鍵/秒
-          </div>
-        </div>
-
-        <div className="flex items-start mb-4">
-          <div className="bg-gray-100 p-4 flex-1">
-            <div className="mb-4">
-              <p className="text-xl mb-2">運転免許証の更新ができてえらい</p>
-              <p className="text-gray-400">
-                うんてんめんきょしょうのこうしんができてえらい
-              </p>
-              <p className="text-gray-400">
-                untenmenkkyoshounokoushinngadekiteerai
-              </p>
-            </div>
-
-            <div className="flex items-center">
-              <button className="border px-2 py-1 mr-2">次</button>
-              <p>化け物と馬鹿者しかいないじゃないか</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="text-center text-red-500 text-xl">
-          画面をクリックしてキー入力をすると開始します
-        </div>
-      </div>
-
-      <button onClick={onStart} className="w-full">
-        クリックしてスタート
-      </button>
-    </div>
-  );
-}
-
-interface PlayScreenProps {
-  onFinish: () => void;
-}
-
-function PlayScreen({ onFinish }: PlayScreenProps) {
-  return (
-    <div>
-      <div className="border border-dashed p-4 mb-4">
         <div className="flex justify-between mb-4">
           <div>
             残り時間 <span className="text-2xl">15</span> 秒
@@ -86,19 +42,28 @@ function PlayScreen({ onFinish }: PlayScreenProps) {
         <div className="flex items-start">
           <div className="bg-gray-100 p-4 flex-1">
             <div className="mb-4">
-              <p className="text-xl mb-2">人類は膝から崩れ落ちすぎる</p>
-              <p className="text-gray-400">
-                じんるいはひざからくずれおちすぎる
+              <p className="text-xl mb-2">{word.display}</p>
+              <p>
+                <span className="text-blue-400">
+                  {word.hiragana.slice(0, wordInputState.currentKana.length)}
+                </span>
+                <span className="text-gray-400">
+                  {word.hiragana.slice(wordInputState.currentKana.length)}
+                </span>
               </p>
               <p>
-                <span className="text-green-600">jinruiha</span>
-                <span className="text-gray-400">hizakarakuzureochisugiru</span>
+                <span className="text-green-600">
+                  {wordInputState.currentRoman}
+                </span>
+                <span className="text-gray-400">
+                  {wordInputState.expectedRoman}
+                </span>
               </p>
             </div>
 
             <div className="flex items-center">
               <button className="border px-2 py-1 mr-2">次</button>
-              <p>空を飛んでしまった車なら衝撃映像で見た</p>
+              <p>{nextWord.display}</p>
             </div>
           </div>
         </div>
@@ -163,11 +128,78 @@ function ResultScreen({ onRestart }: ResultScreenProps) {
 
 export default function App() {
   const [screen, setScreen] = useState<"start" | "play" | "result">("start");
+  const [wordIndex, goToNextWord] = useReducer(
+    (index) => (index + 1) % words.length,
+    0
+  );
+  const currentWord = words[wordIndex];
+  const checker = useRef(initializeChecker({ word: currentWord.hiragana }));
+
+  const [currentKana, setCurrentKana] = useState<string>("");
+  const [currentRoman, setCurrentRoman] = useState<string>("");
+  const [expectedRoman, setExpectedRoman] = useState<string>(
+    checker.current.expected
+  );
+
+  useEffect(() => {
+    // キーボード入力を受け取る
+    const handle = (e: KeyboardEvent) => {
+      if (screen === "start") {
+        // キーボード入力を受け取り、正解であればプレイ可能な状態にする
+        if (("a" <= e.key && e.key <= "z") || e.key === "-") {
+          const result = checker.current.setCharacter(e.key);
+
+          if (result.correct) {
+            // ゲーム開始
+            setScreen("play");
+            setCurrentKana(checker.current.currentKana);
+            setCurrentRoman(checker.current.currentRoman);
+            setExpectedRoman(checker.current.expected);
+          }
+        }
+      } else if (screen === "play") {
+        // キーボード入力を受け取る
+        if (("a" <= e.key && e.key <= "z") || e.key === "-") {
+          const result = checker.current.setCharacter(e.key);
+
+          if (result.correct === true) {
+            setCurrentKana(checker.current.currentKana);
+            setCurrentRoman(checker.current.currentRoman);
+            setExpectedRoman(checker.current.expected);
+
+            if (checker.current.expected === "") {
+              // 最後まで打ったら次のワードへ
+              goToNextWord();
+
+              checker.current = initializeChecker({
+                word: words[(wordIndex + 1) % words.length].hiragana,
+              });
+              setCurrentKana("");
+              setCurrentRoman("");
+              setExpectedRoman(checker.current.expected);
+            }
+          }
+        }
+      } else {
+        if (e.key === "Space") {
+          setScreen("start");
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handle);
+    return () => window.removeEventListener("keydown", handle);
+  }, [screen, checker, wordIndex]);
 
   return (
     <div className="max-w-3xl mx-auto p-4">
-      {screen === "start" && <StartScreen onStart={() => setScreen("play")} />}
-      {screen === "play" && <PlayScreen onFinish={() => setScreen("result")} />}
+      {(screen === "start" || screen === "play") && (
+        <PlayScreen
+          onFinish={() => setScreen("result")}
+          wordIndex={wordIndex}
+          wordInputState={{ currentKana, currentRoman, expectedRoman }}
+        />
+      )}
       {screen === "result" && (
         <ResultScreen onRestart={() => setScreen("start")} />
       )}
