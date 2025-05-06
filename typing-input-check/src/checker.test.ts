@@ -112,6 +112,49 @@ describe("checker 「てんき」の場合", () => {
   });
 });
 
+describe("checker.currentKana", () => {
+  test("aを入力すると、「あ」に変換されること", () => {
+    const checker = initializeChecker({ word: "あ" });
+    checker.setCharacter("a");
+
+    expect(checker.currentKana).toBe("あ");
+  });
+
+  test("kaを入力すると、「か」に変換されること", () => {
+    const checker = initializeChecker({ word: "か" });
+
+    checker.setCharacter("k");
+    expect(checker.currentKana).toBe("");
+
+    checker.setCharacter("a");
+    expect(checker.currentKana).toBe("か");
+  });
+
+  test("tenkiを入力すると、「てんき」に変換されること", () => {
+    const checker = initializeChecker({ word: "てんき" });
+
+    checker.setCharacter("t");
+    checker.setCharacter("e");
+    checker.setCharacter("n");
+    checker.setCharacter("k");
+    checker.setCharacter("i");
+    expect(checker.currentKana).toBe("てんき");
+  });
+
+  test("「あ」に間違った入力をしても、更新されないこと", () => {
+    const checker = initializeChecker({ word: "あ" });
+
+    checker.setCharacter("b");
+    expect(checker.currentKana).toBe("");
+
+    checker.setCharacter("k");
+    expect(checker.currentKana).toBe("");
+
+    checker.setCharacter("i");
+    expect(checker.currentKana).toBe("");
+  });
+});
+
 test.skip("checker wrong input", () => {
   const checker = initializeChecker({ word: "こんにちは" });
   expect(checker.expected).toBe("konnnitiha");

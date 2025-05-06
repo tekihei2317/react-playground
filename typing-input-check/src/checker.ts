@@ -13,6 +13,7 @@ export type CheckResult = {
 export type Checker = {
   expected: string;
   currentRoman: string;
+  currentKana: string;
 
   /**
    * 文字が正しい入力であればセットする
@@ -58,10 +59,10 @@ export function createExpectedInput(word: string): string {
 }
 
 export function initializeChecker({ word }: { word: string }): Checker {
-  let converted = "";
   let buffer = "";
   let expected = createExpectedInput(word);
   let wordIndex = 0;
+  let currentKana = "";
   let currentRoman = "";
 
   const checker: Checker = {
@@ -70,6 +71,9 @@ export function initializeChecker({ word }: { word: string }): Checker {
     },
     get currentRoman(): string {
       return currentRoman;
+    },
+    get currentKana(): string {
+      return currentKana;
     },
 
     setCharacter(character): CheckResult {
@@ -113,6 +117,7 @@ export function initializeChecker({ word }: { word: string }): Checker {
           ) {
             buffer = "";
             currentRoman += character;
+            currentKana += entry.output;
             wordIndex += entry.output.length;
 
             return { correct: true };
@@ -147,6 +152,7 @@ export function initializeChecker({ word }: { word: string }): Checker {
           if (isLeftCorrect && isRightCorrect) {
             buffer = right;
             currentRoman += character;
+            currentKana += leftConverted;
             wordIndex += leftConverted.length;
             // TODO: expectedを更新する
 
