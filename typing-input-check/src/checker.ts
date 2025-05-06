@@ -90,11 +90,19 @@ export function initializeChecker({ word }: { word: string }): Checker {
         // 変換できない場合
 
         const entry = prefixEntries.find((entry) => {
-          // TODO: entry.nextInputを考慮する
-          return (
+          const isOutputCorrect =
             entry.output ===
-            word.slice(wordIndex, wordIndex + entry.output.length)
-          );
+            word.slice(wordIndex, wordIndex + entry.output.length);
+
+          let isNextInputCorrect = true;
+          if (entry.nextInput) {
+            const index = wordIndex + entry.output.length;
+            isNextInputCorrect = searchEntriesByPrefix(entry.nextInput).some(
+              (e) => e.output === word.slice(index, index + e.output.length)
+            );
+          }
+
+          return isOutputCorrect && isNextInputCorrect;
         });
 
         if (entry !== undefined) {
@@ -115,7 +123,7 @@ export function initializeChecker({ word }: { word: string }): Checker {
             entry.output ===
             word.slice(wordIndex, wordIndex + entry.output.length)
           ) {
-            buffer = "";
+            buffer = entry.nextInput ? entry.nextInput : "";
             currentRoman += character;
             currentKana += entry.output;
             wordIndex += entry.output.length;

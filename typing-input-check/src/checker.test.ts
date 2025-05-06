@@ -155,6 +155,29 @@ describe("checker.currentKana", () => {
   });
 });
 
+describe("「っ」の入力", () => {
+  test("「った」はttaで入力できること", () => {
+    const checker = initializeChecker({ word: "った" });
+
+    const result = checker.setCharacter("t");
+    expect(result.correct).toBe(true);
+    const result2 = checker.setCharacter("t");
+    expect(result2.correct).toBe(true);
+    const result3 = checker.setCharacter("a");
+    expect(result3.correct).toBe(true);
+
+    expect(checker.currentKana).toBe("った");
+    expect(checker.currentRoman).toBe("tta");
+  });
+
+  test("「った」はqqで入力できないこと", () => {
+    const checker = initializeChecker({ word: "った" });
+    const result = checker.setCharacter("q");
+
+    expect(result.correct).toBe(false);
+  });
+});
+
 test.skip("checker wrong input", () => {
   const checker = initializeChecker({ word: "こんにちは" });
   expect(checker.expected).toBe("konnnitiha");
