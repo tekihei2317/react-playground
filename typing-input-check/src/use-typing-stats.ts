@@ -15,7 +15,7 @@ type Action =
   | { type: "charConfirmed" }
   | { type: "reset" };
 
-const timeLimit = 10;
+const timeLimit = 20;
 
 function reducer(state: TypingStats, action: Action): TypingStats {
   switch (action.type) {

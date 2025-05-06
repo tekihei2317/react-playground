@@ -13,9 +13,15 @@ interface PlayScreenProps {
   wordIndex: number;
   wordInputState: WordInputState;
   stats: TypingStats;
+  hasMistyped: boolean;
 }
 
-function PlayScreen({ wordIndex, wordInputState, stats }: PlayScreenProps) {
+function PlayScreen({
+  wordIndex,
+  wordInputState,
+  stats,
+  hasMistyped,
+}: PlayScreenProps) {
   const word = words[wordIndex];
   const nextWord = words[(wordIndex + 1) % words.length];
 
@@ -57,9 +63,20 @@ function PlayScreen({ wordIndex, wordInputState, stats }: PlayScreenProps) {
                 <span className="text-green-600">
                   {wordInputState.currentRoman}
                 </span>
-                <span className="text-gray-400">
-                  {wordInputState.expectedRoman}
-                </span>
+                {hasMistyped ? (
+                  <>
+                    <span className="text-red-400">
+                      {wordInputState.expectedRoman.slice(0, 1)}
+                    </span>
+                    <span className="text-gray-400">
+                      {wordInputState.expectedRoman.slice(1)}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-gray-400">
+                    {wordInputState.expectedRoman}
+                  </span>
+                )}
               </p>
             </div>
 
@@ -136,6 +153,9 @@ export default function App() {
   const [expectedRoman, setExpectedRoman] = useState<string>(
     checker.current.expected
   );
+  // かなの文字数を計算する用
+  const [currentKanaLength, setCurrentKanaLength] = useState<number>(0);
+  const [hasMistyped, setHasMistyped] = useState<boolean>(false);
 
   const restart = useEffectEvent(() => {
     setScreen("start");
@@ -145,7 +165,21 @@ export default function App() {
     checker.current = initializeChecker({ word: words[0].hiragana });
     setCurrentKana("");
     setCurrentRoman("");
+    setCurrentKanaLength(0);
     setExpectedRoman(checker.current.expected);
+    setHasMistyped(false);
+  });
+
+  const handleCorrect = useEffectEvent(() => {
+    setCurrentKana(checker.current.currentKana);
+    setCurrentRoman(checker.current.currentRoman);
+    setExpectedRoman(checker.current.expected);
+    updateStats({ type: "correct" });
+    if (currentKanaLength != checker.current.currentKana.length) {
+      updateStats({ type: "charConfirmed" });
+      setCurrentKanaLength(checker.current.currentKana.length);
+    }
+    setHasMistyped(false);
   });
 
   const { typingStats: stats, updateTypingStats: updateStats } =
@@ -161,10 +195,7 @@ export default function App() {
 
           if (result.correct) {
             setScreen("play");
-            setCurrentKana(checker.current.currentKana);
-            setCurrentRoman(checker.current.currentRoman);
-            setExpectedRoman(checker.current.expected);
-            updateStats({ type: "correct" });
+            handleCorrect();
           }
         }
       } else if (screen === "play") {
@@ -172,10 +203,7 @@ export default function App() {
           const result = checker.current.setCharacter(e.key);
 
           if (result.correct === true) {
-            setCurrentKana(checker.current.currentKana);
-            setCurrentRoman(checker.current.currentRoman);
-            setExpectedRoman(checker.current.expected);
-            updateStats({ type: "correct" });
+            handleCorrect();
 
             if (checker.current.expected === "") {
               // 最後まで打ったら次のワードへ
@@ -190,6 +218,7 @@ export default function App() {
             }
           } else {
             updateStats({ type: "miss" });
+            setHasMistyped(true);
           }
         }
       } else {
@@ -201,7 +230,7 @@ export default function App() {
 
     window.addEventListener("keydown", handle);
     return () => window.removeEventListener("keydown", handle);
-  }, [screen, checker, wordIndex, updateStats, restart]);
+  }, [screen, checker, wordIndex, updateStats, restart, handleCorrect]);
 
   // プレイ開始後、1秒ごとに残り時間と打鍵速度を更新する
   const tickHandler = useEffectEvent(() => {
@@ -229,6 +258,7 @@ export default function App() {
           wordIndex={wordIndex}
           wordInputState={{ currentKana, currentRoman, expectedRoman }}
           stats={stats}
+          hasMistyped={hasMistyped}
         />
       )}
       {screen === "result" && (
