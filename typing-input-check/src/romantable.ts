@@ -75,7 +75,76 @@ export function convertBuffer(buffer: string): {
   }
 }
 
-export const romanTable: RomanTable = [
+/**
+ * ワードに対して、予想されるローマ字の文字列を作成する
+ */
+export function createExpectedInput(
+  word: string,
+  initialBuffer: string | undefined = undefined
+): string {
+  // 文字列を前から順番に見ていって、最長一致するものを選択していく
+
+  let index = 0;
+  let buffer = initialBuffer;
+  let expected = "";
+
+  while (index < word.length) {
+    let candidate: TableEntry | undefined;
+
+    romanTable.forEach((entry) => {
+      // バッファと一致しているかどうか
+      const matchBuffer = buffer ? entry.input.startsWith(buffer) : true;
+
+      const isOutputCorrect =
+        entry.output === word.slice(index, index + entry.output.length);
+      let isNextInputCorrect = true;
+      if (entry.nextInput) {
+        const nextKanaIndex = index + entry.output.length;
+        isNextInputCorrect = searchEntriesByPrefix(entry.nextInput).some(
+          (e) =>
+            e.output ===
+            word.slice(nextKanaIndex, nextKanaIndex + e.output.length)
+        );
+      }
+
+      if (matchBuffer && isOutputCorrect && isNextInputCorrect) {
+        // 最長一致の中で、最初に一致したものを選択する
+        if (
+          candidate === undefined ||
+          entry.output.length > candidate.output.length
+        ) {
+          candidate = entry;
+        }
+      }
+    });
+
+    // 変換ルールが存在しなかった場合（記号などがある場合は実装が必要）
+    if (!candidate) {
+      throw new Error(`${word.slice(index)} を変換できません`);
+    }
+
+    index += candidate.output.length;
+    expected += candidate.input.slice(buffer ? buffer.length : 0);
+    buffer = candidate.nextInput ? candidate.nextInput : undefined;
+  }
+
+  return expected;
+}
+
+/**
+ * TODO:
+ */
+export function checkRightCorrect(right: string, word: string, index: number) {
+  return romanTable
+    .filter((entry) => {
+      return entry.input.startsWith(right);
+    })
+    .some(
+      (entry) => entry.output === word.slice(index, index + entry.output.length)
+    );
+}
+
+const romanTable: RomanTable = [
   { input: "-", output: "ー" },
   { input: "~", output: "〜" },
   { input: ".", output: "。" },

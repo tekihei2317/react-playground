@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
-import { CheckResult, createExpectedInput, initializeChecker } from "./checker";
+import { CheckResult, initializeChecker } from "./checker";
+import { createExpectedInput } from "./romantable";
 
 describe("createExpectedInput", () => {
   test("『こんにちは』の入力候補を生成する", () => {

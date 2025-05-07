@@ -4,7 +4,8 @@ import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const filePath = path.join(__dirname, "romantable.txt");
+const filePath = path.join(__dirname, "tuki-2-263-us.txt");
+console.log(filePath);
 const content = await fs.readFile(filePath, { encoding: "utf-8" });
 
 console.log(
