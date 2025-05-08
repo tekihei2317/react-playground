@@ -1,4 +1,5 @@
-import { RomanTable } from "./romantable";
+import { RomanTable } from "./romantable-type";
+
 export const tukiRomanTable: RomanTable = [
   { input: "q", output: "", nextInput: "そ" },
   { input: "w", output: "", nextInput: "こ" },
@@ -112,4 +113,113 @@ export const tukiRomanTable: RomanTable = [
   { input: "ゐl", output: "ヸ" },
   { input: "ゑl", output: "ヹ" },
   { input: "をl", output: "ヺ" },
+];
+
+export const tukiRomanTableForRoman: RomanTable = [
+  { input: "q", output: "そ" },
+  { input: "w", output: "こ" },
+  { input: "e", output: "し" },
+  { input: "r", output: "て" },
+  { input: "t", output: "ょ" },
+
+  { input: "a", output: "は" },
+  { input: "s", output: "か" },
+  // { input: "d", output: "", nextInput: "★" },
+  { input: "f", output: "と" },
+  { input: "g", output: "た" },
+
+  { input: "z", output: "す" },
+  { input: "x", output: "け" },
+  { input: "c", output: "に" },
+  { input: "v", output: "な" },
+  { input: "b", output: "さ" },
+
+  { input: "kq", output: "ぁ" },
+  { input: "kw", output: "ひ" },
+  { input: "ke", output: "ほ" },
+  { input: "kr", output: "ふ" },
+  { input: "kt", output: "め" },
+
+  { input: "ka", output: "ぃ" },
+  { input: "ks", output: "を" },
+  { input: "kd", output: "ら" },
+  { input: "kf", output: "あ" },
+  { input: "kg", output: "よ" },
+
+  { input: "kz", output: "ぅ" },
+  { input: "kx", output: "へ" },
+  { input: "kc", output: "せ" },
+  { input: "kv", output: "ゅ" },
+  { input: "kb", output: "ゃ" },
+
+  { input: "y", output: "つ" },
+  { input: "u", output: "ん" },
+  { input: "i", output: "い" },
+  { input: "o", output: "の" },
+  { input: "p", output: "り" },
+
+  { input: "[", output: "ち" },
+  { input: "h", output: "く" },
+  { input: "j", output: "う" },
+  // { input: "k", output: "", nextInput: "☆" },
+  // { input: "l", output: "゛" },
+  { input: ";", output: "き" },
+  { input: "'", output: "れ" },
+
+  { input: "n", output: "っ" },
+  { input: "m", output: "る" },
+  { input: ",", output: "、" },
+  { input: ".", output: "。" },
+  { input: "/", output: "゜" },
+  { input: "\\", output: "・" },
+
+  { input: "dy", output: "ぬ" },
+  { input: "du", output: "え" },
+  { input: "di", output: "み" },
+  { input: "do", output: "や" },
+  { input: "dp", output: "ぇ" },
+  { input: "d[", output: "「" },
+
+  { input: "dh", output: "ま" },
+  { input: "dj", output: "お" },
+  { input: "dk", output: "も" },
+  { input: "dl", output: "わ" },
+  { input: "d;", output: "ゆ" },
+  { input: "d'", output: "」" },
+
+  { input: "dn", output: "む" },
+  { input: "dm", output: "ろ" },
+  { input: "d,", output: "ね" },
+  { input: "d.", output: "ー" },
+  { input: "d/", output: "ぉ" },
+
+  { input: "sl", output: "が" },
+  { input: ";l", output: "ぎ" },
+  { input: "hl", output: "ぐ" },
+  { input: "xl", output: "げ" },
+  { input: "wl", output: "ご" },
+
+  { input: "bl", output: "ざ" },
+  { input: "el", output: "じ" },
+  { input: "zl", output: "ず" },
+  { input: "kcl", output: "ぜ" },
+  { input: "ql", output: "ぞ" },
+
+  { input: "gl", output: "だ" },
+  { input: "[l", output: "ぢ" },
+  { input: "yl", output: "づ" },
+  { input: "rl", output: "で" },
+  { input: "fl", output: "ど" },
+
+  { input: "al", output: "ば" },
+  { input: "kwl", output: "び" },
+  { input: "krl", output: "ぶ" },
+  { input: "kxl", output: "べ" },
+  { input: "kel", output: "ぼ" },
+
+  { input: "a/", output: "ぱ" },
+  { input: "kw/", output: "ぴ" },
+  { input: "kr/", output: "ぷ" },
+  { input: "kx/", output: "ぺ" },
+  { input: "ke/", output: "ぽ" },
 ];

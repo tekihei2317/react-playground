@@ -142,6 +142,14 @@ function ResultScreen({ onRestart, stats }: ResultScreenProps) {
   );
 }
 
+function isAllowedKey(key: string): boolean {
+  if ("a" <= key && key <= "z") return true;
+
+  const allowedSymbols = ["-", "[", "]", ";", "'", "\\", ",", ".", "/"];
+  if (allowedSymbols.includes(key)) return true;
+  return false;
+}
+
 export default function App() {
   const [screen, setScreen] = useState<"start" | "play" | "result">("start");
   const [wordIndex, setWordIndex] = useState(0);
@@ -190,7 +198,7 @@ export default function App() {
     const handle = (e: KeyboardEvent) => {
       if (screen === "start") {
         // キーボード入力を受け取り、正解であればゲームを開始する
-        if (("a" <= e.key && e.key <= "z") || e.key === "-") {
+        if (isAllowedKey(e.key)) {
           const result = checker.current.setCharacter(e.key);
 
           if (result.correct) {
@@ -199,7 +207,7 @@ export default function App() {
           }
         }
       } else if (screen === "play") {
-        if (("a" <= e.key && e.key <= "z") || e.key === "-") {
+        if (isAllowedKey(e.key)) {
           const result = checker.current.setCharacter(e.key);
 
           if (result.correct === true) {
